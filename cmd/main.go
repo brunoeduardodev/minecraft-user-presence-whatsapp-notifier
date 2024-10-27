@@ -12,6 +12,7 @@ import (
 	"github.com/brunoeduardodev/minecraft-user-presence-whatsapp-notifier/internal/config"
 	"github.com/brunoeduardodev/minecraft-user-presence-whatsapp-notifier/internal/gameevents"
 	"github.com/brunoeduardodev/minecraft-user-presence-whatsapp-notifier/internal/logger"
+	"github.com/brunoeduardodev/minecraft-user-presence-whatsapp-notifier/internal/loggerstore"
 	"github.com/brunoeduardodev/minecraft-user-presence-whatsapp-notifier/internal/sftputil"
 	_ "github.com/mattn/go-sqlite3"
 
@@ -36,6 +37,17 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		logger.Error(ctx, err, "failed to load config")
+		return
+	}
+
+	logstore, err := loggerstore.Connect("loggerstore.db")
+	if err != nil {
+		logger.Error(ctx, err, "failed to connect to loggerstore")
+		return
+	}
+	err = logstore.Prepare(ctx)
+	if err != nil {
+		logger.Error(ctx, err, "failed to prepare loggerstore")
 		return
 	}
 
@@ -133,6 +145,23 @@ func main() {
 		Callback: func(line string) {
 			event, err := gameevents.ParseGameEvent(line)
 			if err != nil {
+				return
+			}
+
+			logged, err := logstore.CheckIfExists(ctx, line)
+			if err != nil {
+				logger.Error(ctx, err, "failed to check if log exists")
+				return
+			}
+
+			if logged {
+				logger.Info(ctx, "log already exists", "log", line)
+				return
+			}
+
+			err = logstore.AddLog(ctx, line)
+			if err != nil {
+				logger.Error(ctx, err, "failed to add log to database")
 				return
 			}
 

@@ -1,2 +1,2 @@
 .env
-wastore.db
+*.db
