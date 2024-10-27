@@ -1,8 +1,10 @@
 package config
 
 import (
+	"context"
 	"os"
 
+	"github.com/brunoeduardodev/minecraft-user-presence-whatsapp-notifier/internal/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -16,7 +18,7 @@ type Config struct {
 func Load() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		return nil, err
+		logger.Warn(context.Background(), ".env file not found...")
 	}
 	sftpUrl := os.Getenv("SFTP_URL")
 
