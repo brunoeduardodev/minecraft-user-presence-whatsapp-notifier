@@ -111,7 +111,7 @@ func main() {
 
 	logToGroup("hello")
 
-	sc, disconnect, err := sftputil.GetConnection(ctx, cfg.SftpUrl)
+	sc, disconnect, err := sftputil.GetConnection(ctx, cfg.SftpUrl, cfg.CheckKnownHosts)
 	if err != nil {
 		logger.Error(ctx, err, "failed to get connection")
 		return

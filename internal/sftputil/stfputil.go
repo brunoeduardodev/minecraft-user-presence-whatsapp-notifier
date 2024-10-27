@@ -16,7 +16,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-func GetConnection(ctx context.Context, connectionUrl string) (*sftp.Client, func() error, error) {
+func GetConnection(ctx context.Context, connectionUrl string, checkKnownHosts bool) (*sftp.Client, func() error, error) {
 	parsedUrl, err := url.Parse(connectionUrl)
 	if err != nil {
 		logger.Error(ctx, err, "failed to parse sftp url")
@@ -35,10 +35,16 @@ func GetConnection(ctx context.Context, connectionUrl string) (*sftp.Client, fun
 	// default sft port
 	port := 2022
 
-	hostKey, err := getHostKey(ctx, host)
-	if err != nil {
-		logger.Error(ctx, err, "failed to get host key")
-		return nil, nil, err
+	hostKeyCallback := ssh.InsecureIgnoreHostKey()
+
+	if checkKnownHosts {
+		hostKey, err := getHostKey(ctx, host)
+		if err != nil {
+			logger.Error(ctx, err, "failed to get host key")
+			return nil, nil, err
+		}
+		hostKeyCallback = ssh.FixedHostKey(*hostKey)
+
 	}
 
 	var auths []ssh.AuthMethod
@@ -56,11 +62,9 @@ func GetConnection(ctx context.Context, connectionUrl string) (*sftp.Client, fun
 	logger.Info(ctx, "connecting to ftp server")
 
 	config := ssh.ClientConfig{
-		User: user,
-		Auth: auths,
-		// Uncomment to ignore host key check
-		//HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		HostKeyCallback: ssh.FixedHostKey(*hostKey),
+		User:            user,
+		Auth:            auths,
+		HostKeyCallback: hostKeyCallback,
 	}
 
 	addr := fmt.Sprintf("%s:%d", host, port)
