@@ -7,7 +7,10 @@ import (
 )
 
 type Config struct {
-	SftpUrl string
+	SftpUrl      string
+	GroupName    string
+	JoinMessage  string
+	LeaveMessage string
 }
 
 func Load() (*Config, error) {
@@ -18,6 +21,9 @@ func Load() (*Config, error) {
 	sftpUrl := os.Getenv("SFTP_URL")
 
 	return &Config{
-		SftpUrl: sftpUrl,
+		SftpUrl:      sftpUrl,
+		JoinMessage:  os.Getenv("JOIN_MESSAGE"),
+		LeaveMessage: os.Getenv("LEAVE_MESSAGE"),
+		GroupName:    os.Getenv("GROUP_NAME"),
 	}, nil
 }
